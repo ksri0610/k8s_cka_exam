@@ -1,0 +1,140 @@
+# Mock exam-3
+1.Q.Ans: k create sa pvviewer
+    3  k create clusterrole pvviewer-role --verb=list --resource=PersistentVolumes 
+    5  k create clusterrolebinding pvviewer-role-binding --clusterrole=pvviewer-role --serviceaccount=default:pvviewer
+    6  k get clusterrolebindings.rbac.authorization.k8s.io | grep -i pvviewer-role-binding
+    7  k run pvviewer --image redis --dry-run=client -o yaml > pvviewer.yaml
+    8  vim pvviewer.yaml 
+   11  k run pvviewer --image redis --dry-run=client -o yaml > pvviewer.yaml
+   12  k apply -f pvviewer.yaml 
+   13  k describe pod pvviewer | grep service
+2.Q.Ans: kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' > /root/CKA/node_ips
+   17  cat /root/CKA/node_ips
+ 3.Q.Ans: k run multi-pod --image nginx --command sleep 4800 --dry-run=client -o yaml > multi-pod.yaml
+   21  vim multi-pod.yaml 
+   22  k apply -f multi-pod.yaml  
+4.Q.Ans :  k run non-root-pod --image redis:alpine --dry-run=client -o yaml > non-root-pod.yaml
+    5  vim non-root-pod.yaml 
+    6  k apply -f non-root-pod.yaml
+    7  kubectl exec -it non-root-pod -- id
+5.Q.Ans : k get pods
+    k get svc
+    k run curl --image=alpine/curl --rm -it -- sh
+    curl
+    curl np-test-service
+    vim networkpolicies.yaml
+    k apply -f networkpolicies.yaml
+6.Q.Ans : k get pods
+   13  k taint nodes node01 env_type=production:NoSchedule
+   17  k describe nodes node01 
+   18  k run dev-redis --image=redis:alpine 
+   19  k get pods -o wide
+   k run prod-redis --image redis:alpine --dry-run=client -o yaml > prod-redis.yaml
+   20  vim prod-redis.yaml 
+   21  k apply -f prod-redis.yaml 
+7.Q.Ans :  k create namespace hr
+   31  k run hr-pod -n hr --image redis:alpine --labels="environment=production,tier=frontend"
+9.Q.Ans : k get deployments.apps 
+    3  k scale deployment nginx-deploy --replicas=3
+    4  k get deployments.apps 
+   11  k get pods -n kube-system 
+   12  cd /etc/kubernetes/manifests/
+   13  ls
+   14  vim kube-controller-manager.yaml
+   16  k get deployments.apps --watch
+8. Q.Ans: k get nodes --kubeconfig /root/CKA/super.kubeconfig
+   17  cd /root/CKA
+   20  ls
+   21  vim super.kubeconfig 
+   25  cat .kube/config 
+   26  cd /root/CKA/
+   27  ls
+   28  vim super.kubeconfig        
+   29  k get nodes --kubeconfig /root/CKA/super.kubeconfig
+
+# Mock exam-1
+   1  k run nginx-pod --image nginx:alpine
+    2  k run messaging --image redis:alpine -l tier=msg
+    3  k create namespace apx-x9984574
+    4  k get nodes -o json > /opt/outputs/nodes-z3444kd9.json
+    5  k expose pod messaging --name=messaging-service --port=6379 --type=ClusterIp 
+    6  k expose pod messaging --name=messaging-service --port=6379 
+    7  k create deployment hr-web-app --image=kodekloud/webapp-color --replicas=2
+    8  k run static-busybox --image=busybox --command sleep --restart=Never --dry-run=client -o yaml > /etc/kubernetes/manifests/static-busybox.yaml
+    9  cat /etc/kubernetes/manifests/static-busybox.yaml
+   10  k create namespace finance
+   11  k get namespace
+   12  k run temp-bus --image=redis:alpine -n finance
+   13  k edit pod orange 
+   14  k replace -f /tmp/kubectl-edit-1961828908.yaml --force 
+   15  k expose deployment hr-web-app --name=hr-web-app-service --port=8080 --type=NodePort 
+   16  k get svc
+   17  k edit svc hr-web-app-service
+   18  kubectl get nodes -o jsonpath='{.items[*].status.nodeInfo.osImage}' > /opt/outputs/nodes_os_x43kj56.txt
+   19  cat /opt/outputs/nodes_os_x43kj56.txt
+   20  vim pv.yaml
+   21  k apply pv.yaml
+   22  k apply -f pv.yaml
+
+# Mock Exam-2   
+2  cat /etc/kubernetes/manifests/etcd.yaml | grep file
+    3  ETCDCTL_API=3 etcdctl snapshot save /opt/etcd-backup.db --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key
+    4  cat /opt/etcd-backup.db
+
+ 2.ans kubectl run alpine-sleeper-cka15-arch --image=alpine --restart=Never --command -- sh -c "sleep 7200"
+ 1. ans kubectl exec -n dev-cka02-svcn tester-cka02-svcn -- nslookup kubernetes.default
+3.ans kubectl exec -it test-pod -- kubectl get namespaces
+4.ans kubectl get jobs --selector=job-name=orange-cron-cka10-trb -o wide
+kubectl get jobs --field-selector=status.successful=1 -o wide
+kubectl get jobs --field-selector=status.successful=1 -o wide
+kubectl get pods -l app=orange-app-cka10-trb -o wide
+kubectl run test-access --rm -it --image=busybox -- /bin/sh -c "wget -qO- http://<ClusterIP>:<port>"
+kubectl logs -l app=orange-app-cka10-trb
+#!/bin/bash
+if curl -s http://orange-app-cka10-trb:8080/health | grep "healthy"; then
+    echo "Application is accessible."
+else
+    echo "Application is not accessible!" >&2
+    exit 1
+fi
+chmod +x /path/to/script.sh
+k run output-pod --image busybox --rm -it --restart=Never -- bin/sh 
+-c 'echo congrts!you have passed cka exam' > output-pod.txt
+cat ~/.kube/config | grep current
+k get cronjob 
+kubectl config get-contexts
+kubectl auth can-i get pods --as=system:serviceaccount:default:blue-sa-cka21-arch --namespace default
+
+  1. Cluster Architecture, Installation & Configuration
+  # Drain the node
+kubectl drain <node-name> --ignore-daemonsets
+
+sudo apt-cache madison kubeadm
+
+# Upgrade kubeadm
+sudo apt-get update && sudo apt-get install -y kubeadm=1.25.x-00
+
+# Plan and apply upgrade
+sudo kubeadm upgrade plan
+sudo kubeadm upgrade apply v1.25.x
+kubeadm version
+
+# Upgrade kubelet and kubectl
+sudo apt-get install -y kubelet=1.25.x-00 kubectl=1.25.x-00
+
+# Restart kubelet
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+
+# Uncordon the node
+kubectl uncordon <node-name>  
+kubectl get nodes
+
+2. Workloads & Scheduling
+Example Task: Create an NGINX deployment, scale it to 3 replicas, and expose it via a NodePort service.
+kubectl create deployment nginx --image=nginx
+kubectl scale deployment nginx --replicas=3
+kubectl expose deployment nginx --port=80 --type=NodePort
+kubectl get svc nginx  # Check assigned NodePort
+
+

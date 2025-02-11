@@ -1,0 +1,107 @@
+# multi-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: multi-pod
+  name: multi-pod
+spec:
+  containers:
+  - image: busybox
+    name: beta
+    env:
+    - name: name
+      value: beta
+    command:
+    - sleep
+    - "4800"
+  - image: nginx
+    name: alpha
+    env:
+    - name: name
+      value: alpha
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+# non-root-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: non-root-pod
+  name: non-root-pod
+spec:
+  containers:
+  - image: redis:alpine
+    name: non-root-pod
+    securityContext:
+      capabilities:
+        add: ["SYS_TIME"]
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+# prod-redis.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: prod-redis
+  name: prod-redis
+spec:
+  containers:
+  - image: redis:alpine
+    name: prod-redis
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  tolerations:
+  - key: "env_type"
+    operator: "Equal"
+    value: "production"
+    effect: "NoSchedule"
+status: {}
+
+# networkpolices.yaml
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-to-nptest
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      run: np-test-1
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 80
+
+ apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-to-nptest
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      run: np-test-1
+  policyTypes:
+    - Ingress
+  ingress:
+    - from: # Define the sources allowed
+        - ipBlock:
+            cidr: 0.0.0.0/0 # Example: Allow traffic from any IP
+      ports:
+        - protocol: TCP
+          port: 80
+     

@@ -1,0 +1,131 @@
+# Error on deployment/replica 
+
+# Look for any events or errors, 
+
+such as issues with image pull, resource limits, or readiness probes by describe deployment/replica
+
+Look for issues such as:
+
+ImagePullBackOff
+CrashLoopBackOff
+Insufficient resources
+
+Fix the Issue
+Depending on the findings, take the following actions:
+
+Image Pull Issue: Verify the image tag and credentials for the container registry.
+Resource Constraints: Update resource requests/limits in the deployment YAML.
+Node Affinity/Taints: Adjust affinity or tolerations if needed.
+Pod Health: Fix readiness or liveness probe issues.
+
+Issue	:                                  Resolution :
+CrashLoopBackOff (application error)	  Fix any errors identified in the logs (e.g., missing environment variables, database connectivity issues).
+Liveness/Readiness Probe Failure	      Adjust or fix incorrect probe configurations in the deployment.
+Insufficient Resources	                  Increase resource limits/requests in the deployment.
+Image Pull Error	                      Verify the image tag and ensure the image exists in the container registry.
+Configuration Issues (e.g., Secrets)	  Ensure the correct config maps or secrets are mounted and accessible.
+
+1. Image Pull Issue: Verify the image tag and credentials for the container registry
+Steps:
+Check the image details and secret configuration in the deployment :
+Check the deployment details
+kubectl describe deployment <deployment-name> -n <namespace>
+Update the image tag if incorrect : 
+Update the image tag in the deployment
+kubectl set image deployment/<deployment-name> <container-name>=<image-name>:<tag> -n <namespace>
+Ensure the image pull secret is correctly configured:
+# List all secrets
+kubectl get secrets -n <namespace>
+
+# Check the secret details
+kubectl describe secret <secret-name> -n <namespace>
+
+# Patch deployment to use the correct imagePullSecret
+kubectl patch deployment <deployment-name> -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name":"<secret-name>"}]}}}}' -n <namespace>
+
+2. Resource Constraints: Update resource requests/limits in the deployment
+# Edit the deployment YAML
+kubectl edit deployment <deployment-name> -n <namespace>
+3. Node Affinity/Taints: Adjust affinity or tolerations if needed
+Steps:
+Check existing node affinity or tolerations.
+kubectl describe pod <pod-name> -n <namespace>
+Add or update node affinity or tolerations in the deployment YAML.
+
+# Edit the deployment YAML
+kubectl edit deployment <deployment-name> -n <namespace>
+
+Application error:
+k get pods & k describe pod 
+k logs pod -f --force --previous 
+controlplane error:
+k get pods -n kube-system
+service kube-apiserver status 
+service kube-controller-manager status 
+service kube-scheduler status
+service kubelet sttus 
+service kube-proxy status
+check service logs
+kube logs kube-apiserver-master -n kube-system
+journalctl -u kube-apiserver
+
+
+# Kube Controller Manager is responsible for monitoring the status of replica sets/deployments 
+ensuring that the desired number of PODs are available so let's check if its running fine.
+
+k get events --field-selector involvedObject.name=kube-controller-manager-cluster4-controlplane -n kube-system
+kubectl config get-contexts : will get all the cluster
+k top nodes
+k logs -f podname
+5.Q.Ans : kubectl rollout history deployment/trace-wl08 -n test-wl08 --revision=2
+echo "busybox:1.35" > /opt/trace-wl08-revision-book.txt
+sudo chmod 644 /opt/trace-wl08-revision-book.txt
+6.Q.Ans : k edit clusterrole red-role-cka23-arch remove watch 
+echo "resource:pods|verbs:get,list" > /opt/red-sa-cka23-arch
+
+kubectl run debug-pod --image=mysql:5.6 --restart=Never -it
+get all contexts and store:
+kubectl config get-contexts -o name > /opt/course/1/contexts
+
+First we find the controlplane node(s) and their taints:
+
+k get node # find controlplane node
+
+k describe node cluster1-controlplane1 | grep Taint -A1 # get controlplane node taints
+
+k get node cluster1-controlplane1 --show-labels # get controlplane node labels
+ Next we create the Pod template:
+
+# check the export on the very top of this document so we can use $do
+k run pod1 --image=httpd:2.4.41-alpine $do > 2.yaml
+
+vim 2.yaml
+
+➜ k -n project-c13 get deploy,ds,sts | grep o3db
+k -n project-c13 get pod --show-labels | grep o3db
+k -n project-c13 scale sts o3db --replicas 1
+statefulset.apps/o3db scaled
+➜ k -n project-c13 get sts o3db
+
+k top -h 
+
+Ssh into the controlplane node with ssh cluster1-controlplane1. Check how the controlplane components kubelet, kube-apiserver, kube-scheduler, kube-controller-manager and etcd are started/installed on the controlplane node.
+
+Also find out the name of the DNS application and how it's started/installed in the cluster.
+
+Write your findings into file /opt/course/8/controlplane-components.txt. The file should be structured like:
+
+# /opt/course/8/controlplane-components.txt
+kubelet: [TYPE]
+kube-apiserver: [TYPE]
+kube-scheduler: [TYPE]
+kube-controller-manager: [TYPE]
+etcd: [TYPE]
+dns: [TYPE] [NAME]
+Choices of [TYPE] are: not-installed, process, static-pod, pod
+
+minikube service myapp-service  --url : to get access from the nodeport svc 
+
+cat /etc/*-relese
+
+
