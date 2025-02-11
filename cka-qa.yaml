@@ -1,0 +1,1227 @@
+1. # CKA Exam Question and Answers
+
+2. # List all the pods sorted by name
+ans: kubect1 get pods --sort-by=.metadata.name
+
+3. # Schedule a Pod as follows:
+• Name: kucc1
+• App Containers: 2
+• Container Name/Images: o nginx o consul
+ans: 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kucc1
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+    - name: consul
+      image: consul
+
+4. # Create a namespace called 'development' and a pod with image nginx called nginx on this namespace.
+kubectl create namespace development
+ans: kubectl run nginx --image=nginx --restart=Never -n development
+
+5. # Given an existing Kubernetes cluster running version 1.20.0, upgrade all of the Kubernetes control plane and node components on the master node only to version
+1.20.1.
+Be sure to drain the master node before upgrading it and uncordon it after the upgrade
+ans: kubectl cordon k8s-master
+kubectl drain k8s-master --delete-local-data --ignore-daemonsets --force
+apt-get install kubeadm=1.20.1-00 kubelet=1.20.1-00 kubectl=1.20.1-00 --
+disableexcludes=kubernetes
+kubeadm upgrade apply 1.20.1 --etcd-upgrade=false
+systemctl daemon-reload
+systemctl restart kubelet kubectl
+uncordon k8s-master
+
+6. # Schedule a pod as follows:
+• Name: nginx-kusc00401
+• Image: nginx
+• Node selector: disk=ssd
+ans: k get nodes --show-lables
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-kusc00401
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+  nodeSelector:
+    disk: ssd
+
+7. # Scale the deployment webserver to 6 pods.
+k scale deployment webserver --replicas 6
+
+Create a snapshot of the etcd instance running at https://127.0.0.1:2379, saving the snapshot to the file path /srv/data/etcd-snapshot.db.
+The following TLS certificates/key are supplied for connecting to the server with etcdctl:
+? CA certificate: /opt/KUCM00302/ca.crt
+? Client certificate: /opt/KUCM00302/etcd-client.crt
+? Client key: Topt/KUCM00302/etcd-client.key
+
+ans: etcdctl --endpoints=https://127.0.0.1:2379 \
+  --cert-file=/opt/KUCM00302/etcd-client.crt \
+  --key-file=/opt/KUCM00302/etcd-client.key \
+  --cacert=/opt/KUCM00302/ca.crt \
+  snapshot save /srv/data/etcd-snapshot.db
+
+  To take the snapshot of the existing ETCD:
+$ etcdctl --endpoints=http://127.0.0.1:2379 \
+--ca-file=/opt/ca.crt \
+--certfile=/opt/etcd-client.crt \
+--key=/opt/etcd-client.key snapshot save /path/to/backup/etcdbkp.db
+
+To check the status of the snapshot:
+$ ETCDCTL_API=3 etcdctl --write-out=table snapshot status snapshotdb
+
+To write the output to the etcd backup file:
+$ ETCDCTL_API=3 etcdctl --write-out=table snapshot status File name saved in the previous step > etcdbkp.txt
+
+6. # Check the image version in pod without the describe command
+ans: kubectl get po nginx -o jsonpath='{.spec.containers[].image}{"\n"}'
+
+9. # Create a file:/opt/KUCC00302/kucc00302.txt that lists all pods that implement service baz in namespace development.
+The format of the file should be one pod name per line.
+ans: kubectl get pods -n development --selector=app=baz -o custom-columns=":metadata.name" > /opt/KUCC00302/kucc00302.txt
+
+
+10. # Create a pod named kucc8 with a single app container for each of the following images running inside 
+(there may be between 1 and 4 images specified): nginx +redis + memcached .
+ans: 
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: kucc8
+  name: kucc8
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+    resources: {}
+  - image: redis
+    name: redis
+  - image: memcached
+    name: memcached
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+
+11. # Create a persistent volume with name app-data, of capacity 2Gi and access mode ReadWriteMany. 
+The type of volume is hostPath and its location is /srv/appdata.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app-data
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /srv/app-data
+  storageClassName: shared
+
+12. # Create a pod as follows:
+ Name:non-persistent-redis
+ container Image:redis
+ Volume with name:cache-control
+ Mount path:/data/redis
+The pod should launch in thestagingnamespace and the volumemust notbe persistent
+To create a non-persistent Redis pod with the specified parameters, you can define a Kubernetes YAML manifest for the pod, 
+which will include a non-persistent volume (emptyDir). 
+This volume type ensures that the data does not persist beyond the lifecycle of the pod.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: non-persistent-redis
+  namespace: staging
+spec:
+  containers:
+  - name: redis
+    image: redis
+    volumeMounts:
+    - mountPath: /data/redis
+      name: cache-control
+  volumes:
+  - name: cache-control
+    emptyDir: {}
+
+
+13. # Create 2 nginx image pods in which one of them is labelled with env=prod and another one labelled with env=dev and verify the same. 
+ans: kubectl run nginx-prod --image=nginx --labels="env=prod"
+     kubectl run nginx-dev --image=nginx --labels="env=dev"
+
+
+14. # Get IP address of the pod ?C ??nginx-dev??
+Kubect1 get po -o wide Using JsonPath
+ans: kubectl get po -o jsonpath="{.items[*].metadata.name} {.items[*].status.podIP}"
+     kubect1 get pods -o=jsonpath='{range items[*]}{.metadata.name}{"\t"}{.status.podIP}{"\n"}{end}'
+     kubectl get po -o jsonpath="{range .items[*]}{.metadata.name} {.spec.nodeName} {.status.podIP}{'\n'}{end}"
+
+15. # List all the pods showing name and namespace with a json path expression
+kubectl get pods -o=jsonpath="{.items[*]['metadata.name', 'metadata.namespace']}"
+
+16. # Check to see how many worker nodes are ready (not including nodes taintedNoSchedule) and write the number to/opt/KUCC00104/kucc00104.txt.
+ans: kubectl get nodes --no-headers | grep -v "NoSchedule" | grep " Ready" | wc -l > /opt/KUCC00104/kucc00104.txt 
+
+17. # Create a new ClusterRole named deployment-clusterrole, which only allows to create the following resource types:
+• Deployment
+• StatefulSet
+• DaemonSet
+Create a new ServiceAccount named cicd-token in the existing namespace app-team1. Bind the new ClusterRole deployment-clusterrole lo the new
+ServiceAccount cicd-token ,limited to the namespace app-team1.
+ans: k create clusterrole deployment-clusterrole --verb create --resource deployments.apps,statefulsets.apps,daemonsets.apps
+     k get clusterrole deployment-clusterrole
+     k create namespace app-team1
+     k create serviceaccount cicd-token -n app-team1
+     kubectl create clusterrolebinding deployment-clusterrolebinding --clusterrole=deployment-clusterrole --serviceaccount=app-team1:cicd-token --namespace=app-team1
+
+18. # Monitor the logs of pod foo and:Extract log lines corresponding to error unable-to-access-website 
+Write them to/opt/KULM00201/foo
+ans: kubectl logs foo | grep "unable-to-access-website" > /opt/KULM00201/foo
+
+19. # Reconfigure the existing deployment front-end and add a port specification named http exposing port 80/tcp of the existing container nginx.
+Create a new service named front-end-svc exposing the container port http.
+Configure the new service to also expose the individual Pods via a NodePort on the nodes on which they are scheduled.
+ans: kubectl set ports deployment nginx --container=nginx --port=80
+     kubectl expose deployment nginx --name=front-end-svc --port=80 --target-port=http --type=NodePort
+     kubectl get deployment nginx -o yaml | grep -i "ports"
+     kubectl get svc front-end-svc
+     kubectl get svc front-end-svc -o=jsonpath='{.spec.ports[0].nodePort}'
+
+20. # Create a pod that echo “hello world” and then exists. Have the pod deleted automatically when it’s completed
+ans: kubectl run hello-world --image=busybox --restart=Never -- /bin/sh -c "echo hello world"
+
+21. # Create a busybox pod that runs the command “env” and save the output to “envpod” file
+ans: kubectl run busybox --image=busybox --restart=Never –-rm -it -- env > envpod.yaml
+     kubectl run envpod --image=busybox --restart=Never --command -- sh -c "env > /envpod"
+     kubectl run mypod --rm -it --restart=Never --image=alpine --command -- sh -c "env"
+
+22. # Create a busybox pod and add ''sleep 3600'' command   
+ans: k run busybox --image busybox --restart=Never --command sleep 3000
+
+23. # Print pod name and start time to ''/opt/pod-status'' file
+ans: kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name} {.status.startTime}{"\n"}{end}' > /opt/pod-status
+
+24. # List pod logs named ''frontend'' and search for the pattern ''started'' and write it to a file ''/opt/error-logs''
+ans: kubectl logs frontend | grep -i 'started' > /opt/error-logs
+
+25. # Create a deployment as follows:
+* Name: nginx-app
+* Using container nginx with version 1.11.10-alpine
+* The deployment should contain 3 replicas
+Next, deploy the application with new version 1.11.13-alpine, by performing a rolling update.
+Finally, rollback that update to the previous version 1.11.10-alpine.
+ans: k create deployment nginx-app --image alpine:1.11.10 --replicas 3
+     kubectl get deployments && kubectl get pods
+Perform a Rolling Update to New Version: kubectl set image deployment/nginx-app nginx=nginx:1.11.13-alpine --record
+k describe deployments.apps nginx-app | grep -i image 
+Check the rollout status: kubectl rollout status deployment/nginx-app
+Rollback to Previous Version: kubectl rollout undo deployment/nginx-app
+k describe deployments.apps nginx-app | grep -i image 
+
+26. # Create and configure the service front-end-service so it's accessible through NodePort and routes to the existing pod named front-end.
+ans: kubectl expose pod front-end --type=NodePort --name=front-end-service --port=80 --target-port=80
+
+27. # List all persistent volumes sorted by capacity, saving the full kubectl output to /opt/KUCC00102/volume_list. Use kubectl 's own functionality for sorting the output, and do not manipulate it any further.
+ans: kubectl get pv --sort-by=.spec.capacity.storage -o wide | tee /opt/KUCC00102/volume_list
+
+28. # Get list of all pods in all namespaces and write it to file ''/opt/pods-list.yaml''
+ans: kubectl get po --all-namespaces > /opt/pods-list.yaml
+
+29. # Check to see how many worker nodes are ready (not including nodes tainted NoSchedule) and write the number to /opt/KUCC00104/kucc00104.txt.
+ans: kubectl get nodes --no-headers | grep -v 'NoSchedule' | grep ' Ready' | wc -l > /opt/KUCC00104/kucc00104.txt
+kubectl get node -o custom-columns='NODE_NAME:.metadata.name,STATUS:.status.conditions[?(@.type=="Ready")].status' > /opt/KUCC00104/kucc00104.txt
+
+30. # nCreate a deployment as follows:
+* Name: nginx-random
+* Exposed via a service nginx-random
+* Ensure that the service & pod are accessible via their respective DNS records
+* The container(s) within any pod(s) running as a part of this deployment should use the nginx Image
+Next, use the utility nslookup to look up the DNS records of the service & pod and write the output to /opt/KUNW00601/service.dns and /opt/KUNW00601/pod.dns respectively.
+ans: kubectl create deployment nginx-random --image=nginx
+     kubectl expose deployment nginx-random --name=nginx-random --port=80 --type=ClusterIP
+     kubectl run busybox --image=busybox --restart=Never --rm -it -- sh
+     nslookup nginx-random > /opt/KUNW00601/service.dns
+    nslookup <pod-ip> > /opt/KUNW00601/pod.dns
+The DNS name for the service will typically be nginx-random.default.svc.cluster.local.
+The DNS name for the pod will be something like <pod-ip>.default.pod.cluster.local.
+
+31. # Set the node named ek8s-node-1 as unavailable and reschedule all the pods running on it.
+ans:  Mark the Node as Unschedulable : kubectl cordon ek8s-node-1
+     Evict All Running Pods: kubectl drain ek8s-node-1 --ignore-daemonsets --delete-emptydir-data
+Create a deployment spec file that will:
+
+32. # Launch 7 replicas of the nginx Image with the label
+app_runtime_stage=dev
+* deployment name: kual00201
+Save a copy of this spec file to /opt/KUAL00201/spec_deployment.yaml
+(or /opt/KUAL00201/spec_deployment.json).
+When you are done, clean up (delete) any new Kubernetes API object that you produced during this task.
+ans: k create deployment kual00201 --image nginx --replicas 7 --dry-run=client -o yaml > kual00201.yaml
+     sed -i '/template:/a \ \ \ \ metadata:\n\ \ \ \ \ \ labels:\n\ \ \ \ \ \ \ \ app_runtime_stage: dev' /KUAL00201.yaml
+     add the labels under spec-temp-meta-labels && ubectl apply -f KUAL00201.yaml
+     kubectl get deployments -l app=kual00201 && kubectl get pods -l app_runtime_stage=dev
+     cleanup kubectl delete deployment kual00201
+
+33. # Create a Kubernetes secret as follows:
+* Name: super-secret
+* password: bob
+Create a pod named pod-secrets-via-file, using the redis Image, which mounts a secret named super-secret at /secrets.
+Create a second pod named pod-secrets-via-env, using the redis Image, which exports password as CONFIDENTIAL 
+ans: kubectl create secret generic super-secret --from-literal=password=bob    
+     kubectl run pod-secrets-via-file --image=redis --restart=Never --dry-run=client -o yaml > pod-secrets-via-file.yaml 
+     Edit the generated pod-secrets-via-file.yaml file to include the volume and volume mount configuration:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-secrets-via-file
+spec:
+  containers:
+  - name: redis
+    image: redis
+    volumeMounts:
+    - name: secret-volume
+      mountPath: /secrets
+      readOnly: true
+  volumes:
+  - name: secret-volume
+    secret:
+      secretName: super-secret
+ kubectl apply -f pod-secrets-via-file.yaml     
+ kubectl run pod-secrets-via-env --image=redis --restart=Never --dry-run=client -o yaml > pod-secrets-via-env.yaml
+ Edit the generated pod-secrets-via-env.yaml file to include the environment variable configuration:
+ apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-secrets-via-env
+spec:
+  containers:
+  - name: redis
+    image: redis
+    env:
+    - name: CONFIDENTIAL
+      valueFrom:
+        secretKeyRef:
+          name: super-secret
+          key: password
+kubectl apply -f pod-secrets-via-env.yaml && kubectl get pods          
+To check the environment variable in pod-secrets-via-env: kubectl exec pod-secrets-via-env -- env | grep CONFIDENTIAL
+To check the mounted secret in pod-secrets-via-file: kubectl exec pod-secrets-via-file -- cat /secrets/password
+34. # Add a taint to node "worker-2" with effect as "NoSchedule" and list the node with taint effect as "NoSchedule"
+ans: kubectl taint nodes worker-2 key=value:NoSchedule
+kubectl get nodes -o='custom-columns=NodeName:.metadata.name,TaintKey:.spec.taints[*].key,TaintValue:.spec.taints[*].value,TaintEffect:.spec.taints[*].effect'
+kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints --no-headers
+kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name} {.spec.taints[?(@.effect=="NoSchedule")].effect}{"\n"}{end}' | awk 'NF==2 {print $0}'
+
+35. # Remove taint added to node ''worker-2''
+ans: kubectl taint nodes worker-2 key=value:NoSchedule-
+     kubectl describe node node1 | grep Taints 
+     kubectl taint nodes worker-2 key-
+36. # Print all pod name and all image name and write it to a file name "/opt/pod-details.txt"
+ans: kubectl get pods -A -o jsonpath="{range .items[*]}{.metadata.name}{'\t'}{.spec.containers[*].image}{'\n'}{end}" > /opt/pod-details.txt
+     cat /opt/pod-details.txt
+37 # Create a namespace called 'development' and a pod with image nginx called nginx on this namespace.   
+ans : kubectl create namespace development
+kubectl run nginx --image=nginx --restart=Never --namespace=development
+38 # Scale the deployment presentation to 9 pods.
+ans: kubectl scale deployment <deployment-name> --replicas=9
+ans: 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+spec:
+  containers:
+    - name: myapp-container
+      image: nginx
+      volumeMounts:
+        - mountPath: "/var/app/config"
+          name: myapp-pvc
+  volumes:
+    - name: myapp-pvc
+      persistentVolumeClaim:
+        claimName: myapp-pvc  # Ensure this PVC is already created
+kubectl apply -f pvc.yaml && kubectl get pods
+
+39. # Ensure a single instance of pod nginx is running on each node of the Kubernetes cluster where nginx also represents the Image name which has to be used. Do not override any taints currently in place.
+Use DaemonSet to complete this task and use ds-kusc00201 as DaemonSet name.
+ans: 
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ds-kusc00201
+  labels:
+    app: nginx
+spec:
+  selector:
+    matchLabels:
+      name: nginx
+  template:
+    metadata:
+      labels:
+        name: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+      tolerations:
+      - operator: Exists
+Explanation:
+apiVersion: apps/v1: Specifies the API version for the DaemonSet.
+kind: DaemonSet: Defines the resource type as a DaemonSet.
+metadata.name: ds-kusc00201: Sets the name of the DaemonSet to ds-kusc00201.
+spec.selector.matchLabels: Specifies the label selector for the DaemonSet. It should match the labels defined in the pod template.
+spec.template: Defines the pod template that will be used to create the pods.
+metadata.labels: Labels for the pods created by this DaemonSet.
+spec.containers: Defines the container(s) that will run in the pod.
+name: nginx: The name of the container.
+image: nginx: The Docker image to use for the container.
+ports: Specifies the container port to expose (port 80 for nginx).
+tolerations: This section ensures that the DaemonSet can tolerate any taints that might be present on the nodes. 
+The operator: Exists allows the pod to tolerate any taint, ensuring it can be scheduled on all nodes regardless of their taints.
+Step 2: Apply the DaemonSet
+Use the kubectl apply command to create the DaemonSet in your Kubernetes cluster:
+kubectl apply -f nginx-daemonset.yaml
+Step 3: Verify the DaemonSet
+You can verify that the DaemonSet has been created and that the nginx pods are running on each node by using the following commands:
+kubectl get daemonset ds-kusc00201
+kubectl get pods -o wide
+40. # Add an init container to hungry-bear (which has been defined in spec file /opt/KUCC00108/pod-specKUCC00108.yaml)
+The init container should create an empty file named /workdir/calm.txt
+If /workdir/calm.txt is not detected, the pod should exit
+Once the spec file has been updated with the init container definition, the pod should be created.
+ans: You need to modify /opt/KUCC00108/pod-specKUCC00108.yaml to include an init container that creates /workdir/calm.txt. 
+Then, the main container should check for its presence before starting.
+Add the following init container under spec.initContainers:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hungry-bear
+spec:
+  initContainers:
+  - name: init-create-file
+    image: busybox
+    command: ["sh", "-c", "touch /workdir/calm.txt"]
+    volumeMounts:
+    - name: workdir-volume
+      mountPath: /workdir
+  containers:
+  - name: hungry-bear
+    image: tomcat:9
+    command: ["sh", "-c", "if [ ! -f /workdir/calm.txt ]; then echo 'Missing calm.txt, exiting'; exit 1; fi; exec catalina.sh run"]
+    volumeMounts:
+    - name: workdir-volume
+      mountPath: /workdir
+  volumes:
+  - name: workdir-volume
+    emptyDir: {}
+Explanation:
+kubectl apply -f /opt/KUCC00108/pod-specKUCC00108.yaml && kubectl get pods -w
+kubectl get pod hungry-bear
+kubectl logs hungry-bear -c init-create-file
+kubectl logs hungry-bear -c hungry-bear
+Explanation:
+The init container (init-create-file) runs before the main container, using busybox to create /workdir/calm.txt.
+The main container (hungry-bear) checks for /workdir/calm.txt. If it's missing, the container exits with an error.
+emptyDir volume ensures the file persists between init and main containers.
+
+41. # Configure the kubelet systemd- managed service, on the node labelled with name=wk8s-node-1, 
+to launch a pod containing a single container of Image httpd named webtool automatically. 
+Any spec files required should be placed in the /etc/kubernetes/manifests directory on the node.
+You can ssh to the appropriate node using
+You can assume elevated privileges on the node with the following command
+ans: To configure the kubelet systemd-managed service on the node labeled name=wk8s-node-1 
+to launch a pod containing a single container of image httpd named webtool automatically, 
+follow these steps:
+sudo cat /var/lib/kubelet/config.yaml | grep staticPodPath
+If it does not return /etc/kubernetes/manifests, edit the kubelet service configuration:
+sudo vim /etc/systemd/system/kubelet.service.d/10-kubeadm.conf 
+Ensure the --pod-manifest-path=/etc/kubernetes/manifests flag is present in the ExecStart line.
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+Create the Static Pod Manifest dir if not exit:
+sudo mkdir -p /etc/kubernetes/manifests
+sudo cat > /etc/kubernetes/manifests/webtool.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webtool
+  labels:
+    app: webtool
+spec:
+  containers:
+    - name: webtool
+      image: httpd
+      ports:
+        - containerPort: 80
+kubectl get pods --all-namespaces | grep webtool && sudo journalctl -u kubelet -f && kubectl describe pod webtool
+kubectl get nodes --show-labels 
+ssh user@wk8s-node-1
+sudo systemctl restart kubelet
+
+42. # Given a partially-functioning Kubernetes cluster, identify symptoms of failure on the cluster.
+Determine the node, the failing service, and take actions to bring up the failed service and restore the health of the cluster.
+Ensure that any changes are made permanently.
+You can ssh to the relevant I nodes (bk8s-master-0 or bk8s-node-0) using: [student@node-1] $ ssh <nodename>
+You can assume elevated privileges on any node in the cluster with the following command: [student@nodename] $ | sudo --i
+ans: If nodes are in a NotReady state, services are CrashLoopBackOff or Pending, or there are errors in events, then there's a failure.
+Common failure types:
+ImagePullBackOff → Check image repo, credentials, and network
+CrashLoopBackOff → Check logs for errors
+NodeNotReady → Kubelet, network, or storage issues
+Check Cluster Status: kubectl get nodes kubectl get nodes
+kubectl get pods -A kubectl describe node <node-name>
+kubectl get events --sort-by=.metadata.creationTimestamp
+Check Pod Status: kubectl get pods --all-namespaces
+Check Service Logs: kubectl logs <pod-name> -n <namespace>
+Check Node Logs: ssh bk8s-master-0
+Check system logs for errors: sudo journalctl -u kubelet
+Check for Disk/Memory Issues: df -h && free -m 
+If the network is an issue:
+kubectl get pods -n kube-system | grep coredns
+kubectl logs <coredns-pod-name> -n kube-system
+If coredns is failing, restart it: kubectl rollout restart deployment coredns -n kube-system
+Ensure Changes are Permanent:
+Check systemctl to enable services on boot: 
+systemctl enable kubelet
+systemctl enable docker  # or containerd
+Check node taints/tolerations if scheduling is failing: 
+kubectl describe node <node-name> | grep Taints
+Check cluster autoscaler and resource limits: kubectl get hpa -A
+kubectl get nodes
+kubectl get pods -A
+kubectl get events --sort-by=.metadata.creationTimestamp
+43. # Create a pod as follows:
+* Name: mongo
+* Using Image: mongo
+* In a new Kubernetes namespace named: my-website
+ans: kubectl create namespace my-website
+kubectl run mongo --image=mongo --namespace=my-website
+kubectl get pods -n my-website
+
+44. # Create a new NetworkPolicy named allow-port-from-namespace in the existing namespace fubar.
+Ensure that the new NetworkPolicy allows Pods in namespace internal to connect to port 9000 of Pods in namespace fubar.
+Further ensure that the new NetworkPolicy:
+✑ does not allow access to Pods, which don't listen on port 9000
+✑ does not allow access from Pods, which are not in namespace internal
+ans: To create a NetworkPolicy named allow-port-from-namespace in the fubar namespace 
+that allows Pods in the internal namespace to connect to port 9000 of Pods in the fubar namespace, 
+while ensuring that access is restricted to only those Pods listening on port 9000 and only from Pods in the internal namespace, 
+you can use the following YAML manifest:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-port-from-namespace
+  namespace: fubar
+spec:
+  podSelector:
+    matchLabels: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: internal
+      ports:
+        - port: 9000
+          protocol: TCP
+kubectl apply -f allow-port-from-namespace.yaml           
+44. # Reconfigure the existing deployment front-end and add a port specification named http exposing port 80/tcp of the existing container nginx.
+Create a new service named front-end-svc exposing the container port http.
+Configure the new service to also expose the individual Pods via a NodePort on the nodes on which they are scheduled.
+ans: Reconfigure the existing deployment front-end:
+k get deployment 
+kubectl expose deployment front-end --port=80 --target-port=80 --name=front-end --type=ClusterIP
+k edit deployment front-end Then, under the containers section, add the following:
+ports:
+- name: http
+  containerPort: 80
+  protocol: TCP 
+Create a new service named front-end-svc: 
+kubectl expose deployment front-end --name=front-end-svc --port=80 --target-port=80 --type=NodePort
+kubectl get deployments
+kubectl get services
+kubectl describe service front-end-svc
+45. # Add a sidecar container named sidecar, using the busybox image, to the existing Pod big-corp-app. 
+The new sidecar container has to run the following command:/bin/sh -c "tail -n+1 -f /var/log/big-corp-app.log 
+Use a Volume, mounted at /var/log, to make the log file big-corp-app.log available to the sidecar container.
+ans: add a sidecar container named sidecar using the busybox image to the existing Pod big-corp-app, 
+and to make the log file big-corp-app.log available to the sidecar container via a shared volume, 
+you can modify the Pod's YAML definition as follows:
+Steps:
+Add a Volume: Define a volume that will be shared between the containers.
+Mount the Volume: Mount the volume at /var/log in both the main container and the sidecar container.
+Add the Sidecar Container: Define the sidecar container with the specified command.
+Here’s an example of how the updated Pod YAML might look: 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: big-corp-app
+spec:
+  containers:
+    # Main container
+    - name: big-corp-app
+      image: your-main-app-image
+      volumeMounts:
+        - name: log-volume
+          mountPath: /var/log
+
+    # Sidecar container
+    - name: sidecar
+      image: busybox
+      command: ["/bin/sh", "-c", "tail -n+1 -f /var/log/big-corp-app.log"]
+      volumeMounts:
+        - name: log-volume
+          mountPath: /var/log
+
+  # Define the shared volume
+  volumes:
+    - name: log-volume
+      emptyDir: {}
+kubectl apply -f updated-big-corp-app.yaml
+46. # From the pod label name=overloaded-cpu, find pods running high CPU workloads and write the name of the pod consuming most CPU to the file 
+/opt/KUTR00401/KUTR00401.txt (which already exists).
+ans: To find the pod consuming the most CPU among those labeled with name=overloaded-cpu, 
+and write its name to the file /opt/KUTR00401/KUTR00401.txt, 
+kubectl top pods -l name=cpu-burner -n kube-system && echo '<podname>' >> /tmp/cpu.txt
+kubectl top pods -l name=cpu-utilizer -n kube-system
+kubectl top pods -l name=cpu-utilizer -n kube-system --no-headers | head -n 1 | --sort.by=  >> /opt/cpu.txt
+you can follow these steps:
+Step 1: Get the Pods with the Label name=overloaded-cpu
+Step 2: Get the CPU Usage for These Pods
+Next, use kubectl top pods to get the CPU usage for these pods. 
+You can filter the output to only show pods with the label name=overloaded-cpu:
+kubectl top pods -l name=overloaded-cpu
+step 3: Identify the Pod Consuming the Most CPU
+From the output of kubectl top pods, identify the pod that is consuming the most CPU. 
+You can sort the output by CPU usage to make this easier:
+kubectl top pods -l name=overloaded-cpu --sort-by=cpu
+Step 4: Write the Pod Name to the File
+Once you have identified the pod consuming the most CPU, write its name to the file /opt/KUTR00401/KUTR00401.txt. 
+Assuming the pod name is most-cpu-consuming-pod, you can do this with:
+echo "most-cpu-consuming-pod" > /opt/KUTR00401/KUTR00401.txt
+kubectl top pods -l name=overloaded-cpu --sort-by=cpu --no-headers | head -n 1 | awk '{print $1}' > /opt/KUTR00401/KUTR00401.txt
+Explanation:
+kubectl top pod -l name=overloaded-cpu: Lists CPU usage of pods with the label name=overloaded-cpu.
+--sort-by=cpu: Sorts the list by CPU usage (newer versions of kubectl may require sorting manually with sort).
+--no-headers: Removes the headers from the output.
+head -n 1: Selects the pod consuming the most CPU.
+awk '{print $1}': Extracts only the pod name.
+> /opt/KUTR00401/KUTR00401.txt: Writes the result to the file.
+
+46. # Create a new PersistentVolumeClaim:
+✑ Name: pv-volume
+✑ Class: csi-hostpath-sc
+✑ Capacity: 10Mi
+Create a new Pod which mounts the PersistentVolumeClaim as a volume:
+✑ Name: web-server
+✑ Image: nginx
+✑ Mount path: /usr/share/nginx/html
+47. # Configure the new Pod to have ReadWriteOnce access on the volume.
+Finally, using kubectl edit or kubectl patch expand the PersistentVolumeClaim to a capacity of 70Mi and record that change.
+ans: Create a PersistentVolumeClaim (PVC) named pv-volume with the specified class and capacity.
+Create a Pod named web-server that mounts the PVC at the specified path.
+Expand the PVC's capacity to 70Mi using kubectl patch or kubectl edit
+Create the PersistentVolumeClaim (pvc.yaml): 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pv-volume
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+  storageClassName: csi-hostpath-sc
+kubectl apply -f pvc.yaml
+Create the Pod (pod.yaml): 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-server
+spec:
+  containers:
+    - name: web-server
+      image: nginx
+      volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: storage
+  volumes:
+    - name: storage
+      persistentVolumeClaim:
+        claimName: pv-volume
+kubectl apply -f pod.yaml
+ Expand the PersistentVolumeClaim
+Modify the PVC to increase storage to 70Mi:
+Edit: kubectl edit pvc pv-volume
+kubectl patch pvc pv-volume -p '{"spec":{"resources":{"requests":{"storage":"70Mi"}}}}' --record
+kubectl get pvc pv-volume
+kubectl describe pvc pv-volume
+kubectl get pod web-server -o yaml
+Task -
+48. # Create a new nginx Ingress resource as follows:
+✑ Name: pong
+✑ Namespace: ing-internal
+✑ Exposing service hello on path /hello using service port 5678
+To create a new NGINX Ingress resource with the specified details, you can use the following YAML configuration:
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pong
+  namespace: ing-internal
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /hello
+        pathType: Prefix
+        backend:
+          service:
+            name: hello
+            port:
+              number: 5678
+kubectl apply -f pong-ingress.yaml
+kubectl get ingress -n ing-internal
+49. # Create a new NetworkPolicy named allow-port-from-namespace in the existing namespace echo.
+Ensure that the new NetworkPolicy allows Pods in namespace internal to connect to port 9200/tcp of Pods in namespace echo.
+Further ensure that the new NetworkPolicy:
+• does not allow access to Pods, which don't listen on port 9200/tcp
+• does not allow access from Pods, which are not in namespace internal
+ans: o create a NetworkPolicy named allow-port-from-namespace in the echo namespace that allows Pods in the internal namespace to connect to port 9200/tcp of Pods in the echo namespace, 
+while ensuring the specified restrictions, you can use the following YAML manifest:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-port-from-namespace
+  namespace: echo
+spec:
+  podSelector:
+    matchLabels: {} # This selects all Pods in the namespace
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: internal
+      ports:
+        - protocol: TCP
+          port: 9200
+Key Points:
+This policy ensures that only Pods in the internal namespace can connect to port 9200/tcp on Pods in the echo namespace.
+
+It does not allow access to Pods that do not listen on port 9200/tcp because the policy explicitly restricts traffic to this port.
+
+It does not allow access from Pods outside the internal namespace because the namespaceSelector restricts traffic to only the internal namespace.
+
+Apply the NetworkPolicy:
+Save the YAML manifest to a file (e.g., allow-port-from-namespace.yaml) and apply it using kubectl:
+kubectl apply -f allow-port-from-namespace.yaml
+This will create the NetworkPolicy in the echo namespace with the specified rules.
+50 # Monitor the logs of pod loggy and extract log lines issue-not-found. Write the output to /tmp/pod.txt.
+ans: kubectl logs pod/loggy | grep "issue-not-found" > /tmp/pod.txt
+kubectl logs pod/loggy -f | grep --line-buffered "issue-not-found" | tee /tmp/pod.txt
+cat /tmp/pod.txt
+51. # Schedule a pod as follows Name :- nginx01 image :- nginx Node Selector :- name=node.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx01
+  labels:
+    env: test
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    imagePullPolicy: IfNotPresent
+  nodeSelector:
+    name: node
+52. # Check to see how many nodes are ready (not including nodes tainted NoSchedule) and write the number to /path/to/node
+ans: kubectl get node | grep -w  Ready | wc -l
+kubectl get node | grep -w  Ready | wc -l
+kubectl describe nodes | grep Taints | grep -I NoSchedule | wc -l  echo 2 > /path/to/node.txt
+kubectl describe nodes | grep -i taint | grep -v :NoSchedule | wc -l > /path/to/node.txt
+53. # The node k8s-node is not in ready state. Ssh to the node and troubleshoot the issue, make the changes permanent to avoid the problem in future.
+ans: 
+# To list the nodes
+kubectl get node
+# To ssh into the node
+ssh k8s-node
+# Change to sudo
+sudo -i
+# Check the status of the kubelet
+systemctl status kubelet 
+# Start the kubelet
+systemctl start kubelet
+# Enable the kubelet to make it permanent
+systemctl enable kubelet
+54. # Configure a Pod that runs 2 containers. The first container should create the file /data/runfile-test.txt. 
+The second container should only start once this file has been created. 
+The second container should run the sleep 3600 command as its task
+ans: 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox:1.28
+    command: ['sh', '-c', "sleep 3600"]
+  initContainers:
+  - name: init-myservice
+    image: busybox:1.28
+    command: ['sh', '-c', "mkdir /data; touch /data/runfile-test.txt"]
+55. # In the run-once-test namespace, run a Pod with the name xxazz-pod-test, using the alpine image and the command sleep 3600. 
+Create the namespace if needed. Ensure that the task in the Pod runs once, and after running it once, the Pod stops.    
+ans: kubectl run xxazz-pod-test --image=alpine --restart=Never --namespace=run-once-test --command -- sleep 
+56. # Find all Kubernetes objects in all namespaces that have the label k8s-app set to the value kube-dns
+ans: kubectl get all --all-namespaces -l k8s-app=kube-dns
+57. # Create a backup of the Etcd database. API version 3 is used for the current database. 
+Write the backup to /var/exam/etcd-backup-test
+ans: mkdir -p /var/exam
+ETCDCTL_API=3 etcdctl snapshot save /var/exam/etcd-backup-test/mysnapshot.db 
+--endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key
+58 # You are developing an application pod with specification as follow:
+Name: busybox-special-app007
+Image: busybox
+Running command: sleep 10000
+Pod only run on a node with label: app=busybox
+Mark worker1 node with label: app=busybox
+# Label worker1 node: app=busybox
+kubectl label nodes vb-worker1.example.com app=busybox
+    node/vb-worker1.example.com labeled
+
+kubectl get nodes --show-labels | grep app=busybox
+    vb-worker1.example.com   Ready      <none>    24d    v1.18.2   app=busybox,beta.kubernetes.io/os=linux
+
+# Create yaml for busybox Pod
+vi busybox-pod.yaml
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: busybox-special-app007
+    spec:
+      containers:
+      - name: busybox-special-app007
+        image: busybox
+        command:
+        - sleep 
+        - "10000"
+      nodeSelector:
+        app: busybox
+
+# Create the pod with kubectl
+kubectl create -f busybox-pod.yaml
+    pod/busybox-special-app007 created
+
+# Check the pod run on the Node with label app: busybox
+kubectl get pod -owide --show-labels
+    NAME                     READY   STATUS    RESTARTS   AGE   IP           NODE                     NOMINATED NODE   READINESS GATES   LABELS
+    busybox-special-app007   1/1     Running   0          60s   10.44.0.12   vb-worker1.example.com   <none>           <none>            <none>
+59. # our team has deployed a containerized application on Kubernetes. You have configured a deployment with a replica count of 3 pods. 
+The application uses a resource-intensive process that consumes a significant amount of CPU resources. 
+You are experiencing performance issues and suspect that the pods are competing for resources. 
+Explain how you can use resource quotas and limits to address this problem.
+ans: kubectl set resources deployment my-app --limits=cpu=500m --requests=cpu=200m
+kubectl create quota my-quota --hard=cpu=2
+kubectl describe deployment my-app
+kubectl describe quota my-quota
+kubectl top pods
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: my-container
+        image: my-image
+        resources:
+          limits:
+            cpu: "1"       # Limit to 1 CPU core
+            memory: "512Mi" # Limit to 512 MiB of memory
+          requests:
+            cpu: "0.5"     # Request 0.5 CPU core
+            memory: "256Mi" # Request 256 MiB of memory
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: my-resource-quota
+  namespace: my-namespace
+spec:
+  hard:
+    requests.cpu: "2"       # Total CPU requests in the namespace cannot exceed 2 cores
+    requests.memory: "2Gi"  # Total memory requests in the namespace cannot exceed 2 GiB
+    limits.cpu: "4"         # Total CPU limits in the namespace cannot exceed 4 cores
+    limits.memory: "4Gi"    # Total memory limits in the namespace cannot exceed 4 GiB            
+
+Example HPA configuration:
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+60. # You are running an application that is highly sensitive and requires strict access control. 
+You need to configure the service to allow access only from a specific pod in the same namespace  
+ans: 
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: restrict-access
+  namespace: my-namespace  # Replace with your actual namespace
+spec:
+  podSelector:
+    matchLabels:
+      app: my-service  # Replace with the pod you want to restrict access to
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: allowed-pod  # Replace with the specific pod allowed to access
+61. # Create and configure the service front-end-service 
+so it's accessible through NodePort and routes to the existing pod named front-end.
+ans: 
+kubectl expose pod front-end --type=NodePort --name=front-end-service --port=80 --target-port=80
+edit nodeport his will show the assigned NodePort, typically in the range 30000-32767. To access the service, use: http://<NodeIP>:<NodePort>
+You are setting up a persistent volume to host a MySQL database, but you want to ensure data consistency and availability. 
+You have multiple nodes in your Kubernetes cluster. 
+Describe the volume mode, access mode, and reclaim policy you would use for this volume.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ssd-storage
+  hostPath:
+    path: /mnt/data/mysql
+62. # You need to deploy a microservice application that uses a custom DNS service for internal communication between microservices. This DNS service is not a standard Kubernetes DNS service. 
+How would you configure Kubernetes to use your custom DNS service for the internal communication of your application?
+ans: To configure Kubernetes to use a custom DNS service for internal communication between microservices, 
+you need to modify the CoreDNS configuration or set up a custom DNS resolver in the cluster. 
+Here’s how you can achieve this using imperative commands:
+
+Step 1: Create a ConfigMap for Custom DNS Settings
+Kubernetes CoreDNS uses a ConfigMap in the kube-system namespace. You need to modify this to add your custom DNS service.
+kubectl get cm coredns -n kube-system -o yaml > coredns-backup.yaml
+Now, patch the CoreDNS ConfigMap with your custom DNS resolver:
+kubectl patch cm coredns -n kube-system --type='json' -p='[
+    {
+        "op": "add",
+        "path": "/data/Corefile",
+        "value": ".:53 {\n    errors\n    health\n    rewrite name custom.internal. custom-dns-service.default.svc.cluster.local\n    forward . 8.8.8.8\n    cache 30\n    loop\n    reload\n    loadbalance\n}"
+    }
+]'
+This rule rewrites any query for custom.internal. to be resolved by custom-dns-service.default.svc.cluster.local.
+
+Step 2: Deploy the Custom DNS Service
+If your DNS service is running as a microservice in Kubernetes, deploy it using an imperative command:
+kubectl run custom-dns-service --image=mydns:latest --port=53 --expose --namespace=default
+This exposes the custom DNS service internally within the cluster.
+
+Step 3: Configure Pods to Use the Custom DNS
+To ensure your microservices use the custom DNS server, you can modify the dnsConfig in their deployment spec:
+kubectl run test-pod --image=busybox --restart=Never -- sleep 3600 \
+  --dns=10.96.0.10 --dns-search=custom.internal
+This overrides the DNS settings for the test-pod, ensuring it uses the CoreDNS configuration with the custom resolver.
+
+Step 4: Restart CoreDNS to Apply Changes
+After modifying CoreDNS, restart the pods:
+kubectl rollout restart deployment coredns -n kube-system
+Verification
+To check if your custom DNS is resolving correctly run: kubectl exec -it test-pod -- nslookup myservice.custom.internal
+This should resolve using the custom DNS microservice.
+This setup ensures Kubernetes uses your custom DNS for internal communication while maintaining external DNS resolution through CoreDNS. 🚀
+
+63 # You have a Kubernetes cluster with a NodePort service exposing a web application on port 30080. 
+You need to restrict access to this service from specific IP addresses (192.168.1.10 and 10.0.0.1) using NetworkPolicy.
+
+To restrict access to a NodePort service using a NetworkPolicy in Kubernetes,
+you can create a NetworkPolicy resource that allows traffic only from specific IP addresses (in this case, 192.168.1.10 and 10.0.0.1). 
+1. Create a NetworkPolicy YAML file
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-specific-ips
+  namespace: default  # Replace with your namespace if different
+spec:
+  podSelector:
+    matchLabels:
+      app: your-web-app  # Replace with the label of your web application pods
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 192.168.1.10/32
+    - ipBlock:
+        cidr: 10.0.0.1/32
+kubectl apply -f restrict-access.yaml
+Verify the NetworkPolicy
+kubectl get networkpolicy -n default
+Test the Access
+After applying the NetworkPolicy, only the IP addresses 192.168.1.10 and 10.0.0.1 will be able to access the NodePort service on port 30080. 
+Other IP addresses will be blocked.
+kubectl create networkpolicy allow-specific-ips \
+  --namespace=default \
+  --pod-selector=app=your-web-app \
+  --ingress='[{"from": [{"ipBlock": {"cidr": "192.168.1.10/32"}}, {"ipBlock": {"cidr": "10.0.0.1/32"}}]}]'
+
+64. # You are running a Deployment named 'web-app' with 3 replicas of a web application container. 
+The container image is hosted in a private registry accessible via a secret named 'my-registry-secret'. 
+You need to implement a rolling update strategy that allows for a maximum of one pod to be unavailable at any given time during the update process. 
+Additionally, you need to configure a 'pre-stop' hook for the container that gracefully shuts down the web application before it is terminated.
+ans: kubectl create deployment web-app --image=<your-private-registry>/web-app:latest --replicas=3 --dry-run=client -o yaml > web-app-deployment.yaml
+Replace <your-private-registry>/web-app:latest with the actual image path in your private registry.
+
+2. Edit the Deployment YAML to Add the Rolling Update Strategy and Pre-Stop Hook
+Open the generated web-app-deployment.yaml file and add the following sections:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: web-app
+        image: <your-private-registry>/web-app:latest
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sh", "-c", "sleep 10"]  # Replace with your graceful shutdown command
+      imagePullSecrets:
+      - name: my-registry-secret
+kubectl apply -f web-app-deployment.yaml && kubectl get deployments kubectl get pods      
+Update the Deployment (Optional)
+If you need to update the Deployment (e.g., to change the image version), you can use the kubectl set image command:
+kubectl set image deployment/web-app web-app=<your-private-registry>/web-app:new-version
+Monitor the Rolling Update
+You can monitor the rolling update process using:
+kubectl rollout status deployment/web-app
+maxUnavailable: 1: Ensures that at most one pod is unavailable during the update process.
+
+maxSurge: 1: Allows for one extra pod to be created during the update process.
+
+preStop hook: The preStop hook is configured to execute a command that gracefully shuts down the web application. In this example, it sleeps for 10 seconds before termination. Replace this with the actual command that gracefully shuts down your application.
+
+imagePullSecrets: Specifies the secret (my-registry-secret) to pull the image from the private registry.
+
+65. # You have a Deployment named 'my-app' running a web application with three replicas. 
+The application is exposed using a 'LoadBalancer' service. 
+You want to create a 'ClusterlP' service for internal communication within the Kubernetes cluster and route traffic from the 'LoadBalancer' service to the 'ClusterlP' service.
+ans: Create a ClusterIP Service for internal communication:
+kubectl create service clusterip my-app --tcp=80:80 --dry-run=client -o yaml > my-app-internal-service.yaml
+edit if and apply & kubectl apply -f my-app-internal-service.yaml
+you can recreate the LoadBalancer service with the correct configuration:
+kubectl create service loadbalancer my-app --tcp=80:80 --dry-run=client -o yaml > my-app-loadbalancer-service.yaml
+kubectl apply -f my-app-loadbalancer-service.yaml
+kubectl get svc
+Since both services select the same app: my-app label, the LoadBalancer will send traffic to the same pods that the ClusterIP service serves.
+Test internal communication:
+From within the cluster, a pod can access http://my-app-clusterip:80.
+Externally, you can use the LoadBalancer’s external IP.
+66. # What is the command to list all the available objects in your Kubernetes cluster?
+ans: kubectl api-resources
+67. # Create a Pod with main container busybox and which executes this
+"while true; do echo 'Hi I am from Main container' >> /var/log/index.html; sleep 5; done" and with sidecar container
+with nginx image which exposes on port 80. Use emptyDir Volume
+and mount this volume on path /var/log for busybox and on path /usr/share/nginx/html for nginx container.
+Verify both containers are running
+ans: Create the Pod with the main container (busybox) and sidecar container (nginx)
+kubectl run my-pod --image=busybox --restart=Never --dry-run=client -o yaml > pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox-nginx-sidecar
+spec:
+  volumes:
+    - name: shared-data
+      emptyDir: {}
+  containers:
+    - name: busybox
+      image: busybox
+      command: ["/bin/sh", "-c", "while true; do echo 'Hi I am from Main container' >> /var/log/index.html; sleep 5; done"]
+      volumeMounts:
+        - name: shared-data
+          mountPath: /var/log
+    - name: nginx
+      image: nginx
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: shared-data
+          mountPath: /usr/share/nginx/html
+kubectl apply -f pod.yaml && kubectl get pods
+kubectl logs busybox-nginx-sidecar -c busybox
+Verify the Nginx Container Serves the File:
+kubectl exec busybox-nginx-sidecar -c busybox -- cat /var/log/index.html
+Port Forward and Access the Webpage:
+kubectl port-forward pod/busybox-nginx-sidecar 8080:80
+curl http://localhost:8080/index.html
+68. # Create an nginx pod with container Port 80 and 
+it should only receive traffic only it checks the endpoint / on port 80 and verify and delete the pod.
+ans: kubectl run nginx --image=nginx --port=80
+kubectl expose pod nginx --type=ClusterIP --port=80 && kubectl get pods
+Check Endpoint / on Port 80
+You can use curl to check if the pod is serving traffic: kubectl describe pod nginx | grep -i readiness
+kubectl exec nginx -- curl -I http://localhost:80/
+Delete the Pod
+Once verified, delete the pod:
+kubectl delete pod nginx
+69. # Create a file called "config.txt" with two values key1=value1and key2=value2. 
+Then create a configmap named "keyvalcfgmap" andread data from the file "config.txt" and 
+verify that configmap is created correctly
+ans: cat >> config.txt << EOF
+key1=value1
+key2=value2
+EOF
+cat config.txt
+// Create configmap from "config.txt" file
+kubectl create cm keyvalcfgmap --from-file=config.txt
+//Verify
+kubectl get cm keyvalcfgmap -o yaml
+70 # Create a Job with an image node which prints node version and verifies there is a pod created for this job
+ans: kubectl create job node-version-job --image=node -- /bin/sh -c "node -v"
+kubectl get jobs
+Verify the Pod is Created for the Job
+List the pods associated with the job: kubectl get pods --selector=job-name=node-version-job
+Get Pod Logs to See Node.js Version
+Once the pod is running or completed, check the logs: kubectl logs -l job-name=node-version-job
+71 # Create a redis pod, and have it use a non-persistent storage
+(volume that lasts for the lifetime of the Pod)
+ans: Here's a Kubernetes manifest for a Redis pod using emptyDir as a non-persistent storage volume. 
+The emptyDir volume will last only for the lifetime of the Pod, meaning data will be lost when the Pod is deleted or restarted.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redis-pod
+  labels:
+    app: redis
+spec:
+  containers:
+    - name: redis
+      image: redis:latest
+      ports:
+        - containerPort: 6379
+      volumeMounts:
+        - mountPath: /data
+          name: redis-storage
+  volumes:
+    - name: redis-storage
+      emptyDir: {}
+72 # Create a secret mysecret with values user=myuser and password=mypassword
+ans: kubectl create secret generic my-secret --fromliteral=username=user --from-literal=password=mypassword
+// Verify
+kubectl get secret --all-namespaces
+kubectl get secret generic my-secret -o yaml
+73. # Create a pod with environment variables as var1=value1.Check the environment variable in pod
+ans: kubectl run nginx --image=nginx --restart=Never --env=var1=value1
+# then
+kubectl exec -it nginx -- env
+# or
+kubectl exec -it nginx -- sh -c 'echo $var1'
+# or
+kubectl describe po nginx | grep value1
+74 # Update the Pod ckad00018-newpod in the ckad00018 namespace to use a NetworkPolicy allowing the Pod to send and 
+receive traffic only to and from the pods web and db
+ans: To enforce a NetworkPolicy that allows the Pod ckad00018-newpod in the ckad00018 namespace
+ to communicate only with the web and db Pods, follow these steps:
+ apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-web-db
+  namespace: ckad00018
+spec:
+  podSelector:
+    matchLabels:
+      app: ckad00018-newpod
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: web
+        - podSelector:
+            matchLabels:
+              app: db
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: web
+        - podSelector:
+            matchLabels:
+              app: db
+kubectl apply -f network-policy.yaml
+kubectl get pods -n ckad00018 --show-labels
+kubectl label pod <web-pod-name> -n ckad00018 app=web
+kubectl label pod <db-pod-name> -n ckad00018 app=db
+kubectl exec -n ckad00018 ckad00018-newpod -- curl http://web
+kubectl exec -n ckad00018 ckad00018-newpod -- curl http://db
+75 # Create a pod with init container which waits for a service called "myservice" to be created. 
+Once init container completes, the myapp-container should start and print a message "The app is running" and sleep for 3600 seconds.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  initContainers:
+  - name: wait-for-service
+    image: busybox:1.28
+    command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']
+  containers:
+  - name: myapp-container
+    image: busybox:1.28
+    command: ['sh', '-c', 'echo "The app is running" && sleep 3600']
+    kubectl apply -f myapp-pod.yaml
+    kubectl expose pod myapp-pod --name=myservice --port=80 --target-port=80
